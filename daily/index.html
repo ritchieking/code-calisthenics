@@ -1,0 +1,992 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Code Calisthenics</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="description" content="One coding problem a day for four months: CS fundamentals, async and live data, frontend and backend. Tests run in the browser.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,750&family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: a training log. Four-month calendar on the left, today's problem on the right:
+   prompt, editor, test results, then hints and the answer, in the order you'd reach for them. */
+:root {
+  --bg: #eceff3;
+  --surface: #ffffff;
+  --surface-2: #f5f7f9;
+  --code-bg: #fbfcfd;
+  --ink: #141c27;
+  --muted: #5a6575;
+  --line: #d8dee6;
+  --accent: #2752c9;
+  --accent-ink: #ffffff;
+  --accent-soft: #e2e9fa;
+  --good: #1b7343;
+  --good-soft: #e0f2e7;
+  --part: #8a6400;
+  --part-soft: #fbf0d2;
+  --bad: #b8322a;
+  --bad-soft: #fae5e2;
+  --t-cs: #6b45b8;
+  --t-async: #0d7a72;
+  --t-fe: #b0461e;
+  --t-be: #2752c9;
+  --syn-kw: #8a3bc4;
+  --syn-str: #0d7556;
+  --syn-com: #7a8595;
+  --syn-num: #b04d17;
+  --syn-fn: #2752c9;
+  --syn-ty: #a2350f;
+
+  --font-display: "Bricolage Grotesque", "Avenir Next", "Segoe UI", system-ui, sans-serif;
+  --font-body: "IBM Plex Sans", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  --r: 8px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0d1218; --surface: #141b24; --surface-2: #19222d; --code-bg: #10161e;
+    --ink: #e5eaf0; --muted: #94a0b1; --line: #263140;
+    --accent: #7ea2ff; --accent-ink: #0b1220; --accent-soft: #1c2a48;
+    --good: #5fd08f; --good-soft: #13291d; --part: #e8c15a; --part-soft: #2c2610; --bad: #ff8a7f; --bad-soft: #321816;
+    --t-cs: #b39bff; --t-async: #5fd0c4; --t-fe: #f59f7a; --t-be: #8fb0ff;
+    --syn-kw: #c99bff; --syn-str: #7fd6a8; --syn-com: #6f7c8e; --syn-num: #f2a36b; --syn-fn: #8fb0ff; --syn-ty: #f59f7a;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0d1218; --surface: #141b24; --surface-2: #19222d; --code-bg: #10161e;
+  --ink: #e5eaf0; --muted: #94a0b1; --line: #263140;
+  --accent: #7ea2ff; --accent-ink: #0b1220; --accent-soft: #1c2a48;
+  --good: #5fd08f; --good-soft: #13291d; --part: #e8c15a; --part-soft: #2c2610; --bad: #ff8a7f; --bad-soft: #321816;
+  --t-cs: #b39bff; --t-async: #5fd0c4; --t-fe: #f59f7a; --t-be: #8fb0ff;
+  --syn-kw: #c99bff; --syn-str: #7fd6a8; --syn-com: #6f7c8e; --syn-num: #f2a36b; --syn-fn: #8fb0ff; --syn-ty: #f59f7a;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body {
+  background: var(--bg); color: var(--ink);
+  font-family: var(--font-body); font-size: 15px; line-height: 1.55;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 20px 48px;
+}
+button, input, textarea, select { font: inherit; color: inherit; }
+button { cursor: pointer; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+h1, h2, h3 { font-family: var(--font-display); text-wrap: balance; margin: 0; }
+a { color: var(--accent); }
+
+.shell { max-width: 1240px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; }
+.mast { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 12px 24px; }
+.brand { display: flex; flex-direction: column; gap: 2px; }
+.brand h1 { font-size: clamp(26px, 4vw, 34px); font-weight: 750; letter-spacing: -0.02em; line-height: 1.05; }
+.brand h1 span { color: var(--accent); }
+.brand p { margin: 0; color: var(--muted); max-width: 62ch; }
+.brand nav { display: flex; gap: 14px; font-size: 14px; margin-top: 4px; }
+.tally { display: flex; gap: 22px; font-variant-numeric: tabular-nums; }
+.tally div { display: flex; flex-direction: column; }
+.tally b { font-family: var(--font-display); font-size: 22px; font-weight: 750; line-height: 1.1; }
+.tally small { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; }
+
+.layout { display: grid; grid-template-columns: minmax(0, 1fr); gap: 20px; align-items: start; }
+.layout > .cal { order: 2; }
+@media (min-width: 980px) { .layout > .cal { order: 0; } }
+@media (min-width: 980px) { .layout { grid-template-columns: 300px minmax(0, 1fr); } }
+
+/* Calendar */
+.cal { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 14px; display: flex; flex-direction: column; gap: 12px; }
+@media (min-width: 980px) { .cal { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 16px); max-height: calc(100vh - 32px); overflow-y: auto; } }
+.cal-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.cal-head h2 { font-size: 16px; font-weight: 750; }
+.cal-head button { font-size: 13px; }
+.cal details summary { cursor: pointer; font-size: 13px; color: var(--muted); }
+.cal-body { display: flex; flex-direction: column; gap: 10px; }
+.month { display: flex; flex-direction: column; gap: 4px; }
+.month h3 { font-family: var(--font-body); font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.07em; color: var(--muted); }
+.grid7 { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 3px; }
+.dow { font-size: 10px; color: var(--muted); text-align: center; }
+.day {
+  aspect-ratio: 1; max-width: 100%; border-radius: 5px; border: 1px solid var(--line); background: var(--surface-2);
+  font-size: 11px; font-variant-numeric: tabular-nums; color: var(--muted); padding: 0; position: relative;
+}
+.day::after { content: ""; position: absolute; left: 50%; bottom: 3px; width: 4px; height: 4px; margin-left: -2px; border-radius: 50%; background: var(--tc, transparent); }
+.day.future { opacity: 0.55; }
+.day.attempted { border-color: var(--part); color: var(--ink); }
+.day.solved { background: var(--good-soft); border-color: transparent; color: var(--good); font-weight: 600; }
+.day.revealed { background: var(--part-soft); border-color: transparent; color: var(--part); font-weight: 600; }
+.day.today { box-shadow: 0 0 0 2px var(--accent); color: var(--ink); }
+.day[aria-current="true"] { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+.day.empty { visibility: hidden; }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 12px; font-size: 12px; color: var(--muted); }
+.legend span { display: inline-flex; align-items: center; gap: 5px; }
+.legend i { width: 10px; height: 10px; border-radius: 3px; display: inline-block; border: 1px solid var(--line); }
+.legend .tdot { width: 8px; height: 8px; border-radius: 50%; border: 0; }
+.settings { display: flex; flex-direction: column; gap: 6px; font-size: 13px; padding-top: 6px; }
+.settings label { color: var(--muted); }
+.settings input { padding: 5px 8px; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); }
+
+/* Problem */
+.prob { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+.eyebrow { display: flex; flex-wrap: wrap; gap: 6px 12px; align-items: center; font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.07em; }
+.track { font-weight: 600; color: var(--tc); display: inline-flex; align-items: center; gap: 6px; }
+.track::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: currentColor; }
+.prob-head { display: flex; flex-direction: column; gap: 8px; }
+.prob-head h2 { font-size: clamp(24px, 3.2vw, 30px); font-weight: 750; letter-spacing: -0.015em; line-height: 1.12; }
+.status-pill { font-size: 12px; font-weight: 600; padding: 2px 9px; border-radius: 999px; text-transform: none; letter-spacing: 0; }
+.status-pill.solved { color: var(--good); background: var(--good-soft); }
+.status-pill.revealed { color: var(--part); background: var(--part-soft); }
+.status-pill.attempted { color: var(--muted); background: var(--surface-2); border: 1px solid var(--line); }
+.daynav { display: flex; flex-wrap: wrap; gap: 8px; }
+
+.prose { max-width: 74ch; display: flex; flex-direction: column; gap: 10px; }
+.prose p, .prose ul, .prose ol { margin: 0; }
+.prose ul, .prose ol { padding-left: 22px; display: flex; flex-direction: column; gap: 3px; }
+.prose code { font-family: var(--font-mono); font-size: 0.88em; background: var(--surface-2); border: 1px solid var(--line); padding: 0 5px; border-radius: 4px; overflow-wrap: anywhere; }
+.prose pre { margin: 0; background: var(--code-bg); border: 1px solid var(--line); border-radius: 6px; padding: 10px 12px; overflow-x: auto; font-size: 13px; line-height: 1.55; }
+.prose pre code { background: none; border: 0; padding: 0; font-size: inherit; overflow-wrap: normal; }
+
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); overflow: hidden; min-width: 0; }
+.panel-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 6px 12px; padding: 8px 12px; background: var(--surface-2); border-bottom: 1px solid var(--line); font-size: 13px; }
+.panel-head code { font-family: var(--font-mono); font-weight: 600; }
+.panel-foot { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 10px; padding: 10px 12px; border-top: 1px solid var(--line); background: var(--surface-2); }
+.hint { font-size: 12px; color: var(--muted); }
+
+.btn { border: 1px solid var(--line); background: var(--surface); border-radius: 7px; padding: 7px 14px; font-weight: 500; font-size: 14px; }
+.btn:hover { background: var(--surface-2); }
+.btn.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+.btn.primary:hover { filter: brightness(1.06); }
+.btn.small { padding: 4px 10px; font-size: 13px; }
+.btn.quiet { border-color: transparent; background: transparent; color: var(--accent); }
+.btn.warn { color: var(--part); border-color: color-mix(in srgb, var(--part) 50%, var(--line)); }
+.btn:disabled { opacity: 0.55; cursor: progress; }
+
+/* Editor */
+.editor-wrap .CodeMirror { height: auto; font-family: var(--font-mono); font-size: 13.5px; line-height: 1.6; background: var(--code-bg); color: var(--ink); }
+.editor-wrap .CodeMirror-scroll { min-height: 260px; max-height: 68vh; }
+.editor-wrap .CodeMirror-gutters { background: var(--code-bg); border-right: 1px solid var(--line); }
+.editor-wrap .CodeMirror-linenumber { color: var(--syn-com); }
+.editor-wrap .CodeMirror-cursor { border-left-color: var(--ink); }
+.editor-wrap .CodeMirror-selected { background: var(--accent-soft) !important; }
+.editor-wrap .CodeMirror-focused .CodeMirror-selected { background: color-mix(in srgb, var(--accent) 22%, transparent) !important; }
+.editor-wrap .CodeMirror-matchingbracket { color: var(--good) !important; text-decoration: underline; }
+.editor-wrap textarea.fallback { width: 100%; min-height: 300px; border: 0; padding: 10px 12px; font-family: var(--font-mono); font-size: 13.5px; background: var(--code-bg); resize: vertical; }
+.kw, .editor-wrap .cm-s-default .cm-keyword { color: var(--syn-kw); }
+.str, .editor-wrap .cm-s-default .cm-string, .editor-wrap .cm-s-default .cm-string-2 { color: var(--syn-str); }
+.com, .editor-wrap .cm-s-default .cm-comment { color: var(--syn-com); font-style: italic; }
+.num, .editor-wrap .cm-s-default .cm-number { color: var(--syn-num); }
+.fn, .editor-wrap .cm-s-default .cm-def, .editor-wrap .cm-s-default .cm-property { color: var(--syn-fn); }
+.ty, .editor-wrap .cm-s-default .cm-atom, .editor-wrap .cm-s-default .cm-variable-3, .editor-wrap .cm-s-default .cm-type { color: var(--syn-ty); }
+.editor-wrap .cm-s-default .cm-variable, .editor-wrap .cm-s-default .cm-variable-2, .editor-wrap .cm-s-default .cm-operator, .editor-wrap .cm-s-default .cm-punctuation, .editor-wrap .cm-s-default .cm-meta, .editor-wrap .cm-s-default .cm-qualifier, .editor-wrap .cm-s-default .cm-tag, .editor-wrap .cm-s-default .cm-attribute, .editor-wrap .cm-s-default .cm-builtin { color: var(--ink); }
+code, pre, .CodeMirror { font-variant-ligatures: none; }
+
+/* Results */
+.results { padding: 4px 0; }
+.summary { display: flex; align-items: center; gap: 10px; padding: 10px 12px; font-weight: 600; }
+.summary.pass { color: var(--good); } .summary.fail { color: var(--bad); }
+.bar { flex: 1; height: 6px; border-radius: 3px; background: var(--bad-soft); overflow: hidden; max-width: 220px; }
+.bar i { display: block; height: 100%; background: var(--good); }
+.tests { list-style: none; margin: 0; padding: 0 12px 10px; display: flex; flex-direction: column; gap: 4px; }
+.tests li { display: grid; grid-template-columns: 18px minmax(0, 1fr); gap: 2px 8px; font-size: 14px; }
+.tests .mark { font-weight: 700; }
+.tests .ok .mark { color: var(--good); } .tests .no .mark { color: var(--bad); }
+.tests .msg { grid-column: 2; font-family: var(--font-mono); font-size: 12.5px; color: var(--bad); overflow-wrap: anywhere; white-space: pre-wrap; }
+.err { margin: 0 12px 12px; padding: 10px 12px; border-radius: 6px; background: var(--bad-soft); color: var(--bad); font-family: var(--font-mono); font-size: 13px; white-space: pre-wrap; overflow-wrap: anywhere; }
+.logs { margin: 0 12px 12px; display: flex; flex-direction: column; gap: 4px; }
+.logs summary { font-size: 13px; color: var(--muted); cursor: pointer; }
+.logs pre { margin: 0; background: var(--code-bg); border: 1px solid var(--line); border-radius: 6px; padding: 8px 10px; font-size: 12.5px; max-height: 200px; overflow: auto; white-space: pre-wrap; overflow-wrap: anywhere; }
+.empty-results { padding: 14px 12px; color: var(--muted); font-size: 14px; }
+.win { margin: 0 12px 12px; padding: 10px 12px; border-radius: 6px; background: var(--good-soft); color: var(--good); font-size: 14px; }
+
+/* Help */
+.help { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; }
+@media (min-width: 760px) { .help { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } }
+.help .panel-body { padding: 12px; display: flex; flex-direction: column; gap: 10px; }
+.hints { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 8px; }
+.answer-body { padding: 12px; display: flex; flex-direction: column; gap: 12px; border-top: 1px solid var(--line); }
+.solution { margin: 0; background: var(--code-bg); border: 1px solid var(--line); border-radius: 6px; padding: 10px 12px; overflow-x: auto; font-family: var(--font-mono); font-size: 13px; line-height: 1.55; }
+.answer-panel, .help .wide { grid-column: 1 / -1; }
+
+.foot { color: var(--muted); font-size: 13px; text-align: center; }
+.loading { padding: 40px; text-align: center; color: var(--muted); }
+</style>
+<style id="cm-css">
+/* CodeMirror 5.65.16 core styles (MIT) */
+/* BASICS */
+
+.CodeMirror {
+  /* Set height, width, borders, and global font properties here */
+  font-family: monospace;
+  height: 300px;
+  color: black;
+  direction: ltr;
+}
+
+/* PADDING */
+
+.CodeMirror-lines {
+  padding: 4px 0; /* Vertical padding around content */
+}
+.CodeMirror pre.CodeMirror-line,
+.CodeMirror pre.CodeMirror-line-like {
+  padding: 0 4px; /* Horizontal padding of content */
+}
+
+.CodeMirror-scrollbar-filler, .CodeMirror-gutter-filler {
+  background-color: white; /* The little square between H and V scrollbars */
+}
+
+/* GUTTER */
+
+.CodeMirror-gutters {
+  border-right: 1px solid #ddd;
+  background-color: #f7f7f7;
+  white-space: nowrap;
+}
+.CodeMirror-linenumbers {}
+.CodeMirror-linenumber {
+  padding: 0 3px 0 5px;
+  min-width: 20px;
+  text-align: right;
+  color: #999;
+  white-space: nowrap;
+}
+
+.CodeMirror-guttermarker { color: black; }
+.CodeMirror-guttermarker-subtle { color: #999; }
+
+/* CURSOR */
+
+.CodeMirror-cursor {
+  border-left: 1px solid black;
+  border-right: none;
+  width: 0;
+}
+/* Shown when moving in bi-directional text */
+.CodeMirror div.CodeMirror-secondarycursor {
+  border-left: 1px solid silver;
+}
+.cm-fat-cursor .CodeMirror-cursor {
+  width: auto;
+  border: 0 !important;
+  background: #7e7;
+}
+.cm-fat-cursor div.CodeMirror-cursors {
+  z-index: 1;
+}
+.cm-fat-cursor .CodeMirror-line::selection,
+.cm-fat-cursor .CodeMirror-line > span::selection, 
+.cm-fat-cursor .CodeMirror-line > span > span::selection { background: transparent; }
+.cm-fat-cursor .CodeMirror-line::-moz-selection,
+.cm-fat-cursor .CodeMirror-line > span::-moz-selection,
+.cm-fat-cursor .CodeMirror-line > span > span::-moz-selection { background: transparent; }
+.cm-fat-cursor { caret-color: transparent; }
+@-moz-keyframes blink {
+  0% {}
+  50% { background-color: transparent; }
+  100% {}
+}
+@-webkit-keyframes blink {
+  0% {}
+  50% { background-color: transparent; }
+  100% {}
+}
+@keyframes blink {
+  0% {}
+  50% { background-color: transparent; }
+  100% {}
+}
+
+/* Can style cursor different in overwrite (non-insert) mode */
+.CodeMirror-overwrite .CodeMirror-cursor {}
+
+.cm-tab { display: inline-block; text-decoration: inherit; }
+
+.CodeMirror-rulers {
+  position: absolute;
+  left: 0; right: 0; top: -50px; bottom: 0;
+  overflow: hidden;
+}
+.CodeMirror-ruler {
+  border-left: 1px solid #ccc;
+  top: 0; bottom: 0;
+  position: absolute;
+}
+
+/* DEFAULT THEME */
+
+.cm-s-default .cm-header {color: blue;}
+.cm-s-default .cm-quote {color: #090;}
+.cm-negative {color: #d44;}
+.cm-positive {color: #292;}
+.cm-header, .cm-strong {font-weight: bold;}
+.cm-em {font-style: italic;}
+.cm-link {text-decoration: underline;}
+.cm-strikethrough {text-decoration: line-through;}
+
+.cm-s-default .cm-keyword {color: #708;}
+.cm-s-default .cm-atom {color: #219;}
+.cm-s-default .cm-number {color: #164;}
+.cm-s-default .cm-def {color: #00f;}
+.cm-s-default .cm-variable,
+.cm-s-default .cm-punctuation,
+.cm-s-default .cm-property,
+.cm-s-default .cm-operator {}
+.cm-s-default .cm-variable-2 {color: #05a;}
+.cm-s-default .cm-variable-3, .cm-s-default .cm-type {color: #085;}
+.cm-s-default .cm-comment {color: #a50;}
+.cm-s-default .cm-string {color: #a11;}
+.cm-s-default .cm-string-2 {color: #f50;}
+.cm-s-default .cm-meta {color: #555;}
+.cm-s-default .cm-qualifier {color: #555;}
+.cm-s-default .cm-builtin {color: #30a;}
+.cm-s-default .cm-bracket {color: #997;}
+.cm-s-default .cm-tag {color: #170;}
+.cm-s-default .cm-attribute {color: #00c;}
+.cm-s-default .cm-hr {color: #999;}
+.cm-s-default .cm-link {color: #00c;}
+
+.cm-s-default .cm-error {color: #f00;}
+.cm-invalidchar {color: #f00;}
+
+.CodeMirror-composing { border-bottom: 2px solid; }
+
+/* Default styles for common addons */
+
+div.CodeMirror span.CodeMirror-matchingbracket {color: #0b0;}
+div.CodeMirror span.CodeMirror-nonmatchingbracket {color: #a22;}
+.CodeMirror-matchingtag { background: rgba(255, 150, 0, .3); }
+.CodeMirror-activeline-background {background: #e8f2ff;}
+
+/* STOP */
+
+/* The rest of this file contains styles related to the mechanics of
+   the editor. You probably shouldn't touch them. */
+
+.CodeMirror {
+  position: relative;
+  overflow: hidden;
+  background: white;
+}
+
+.CodeMirror-scroll {
+  overflow: scroll !important; /* Things will break if this is overridden */
+  /* 50px is the magic margin used to hide the element's real scrollbars */
+  /* See overflow: hidden in .CodeMirror */
+  margin-bottom: -50px; margin-right: -50px;
+  padding-bottom: 50px;
+  height: 100%;
+  outline: none; /* Prevent dragging from highlighting the element */
+  position: relative;
+  z-index: 0;
+}
+.CodeMirror-sizer {
+  position: relative;
+  border-right: 50px solid transparent;
+}
+
+/* The fake, visible scrollbars. Used to force redraw during scrolling
+   before actual scrolling happens, thus preventing shaking and
+   flickering artifacts. */
+.CodeMirror-vscrollbar, .CodeMirror-hscrollbar, .CodeMirror-scrollbar-filler, .CodeMirror-gutter-filler {
+  position: absolute;
+  z-index: 6;
+  display: none;
+  outline: none;
+}
+.CodeMirror-vscrollbar {
+  right: 0; top: 0;
+  overflow-x: hidden;
+  overflow-y: scroll;
+}
+.CodeMirror-hscrollbar {
+  bottom: 0; left: 0;
+  overflow-y: hidden;
+  overflow-x: scroll;
+}
+.CodeMirror-scrollbar-filler {
+  right: 0; bottom: 0;
+}
+.CodeMirror-gutter-filler {
+  left: 0; bottom: 0;
+}
+
+.CodeMirror-gutters {
+  position: absolute; left: 0; top: 0;
+  min-height: 100%;
+  z-index: 3;
+}
+.CodeMirror-gutter {
+  white-space: normal;
+  height: 100%;
+  display: inline-block;
+  vertical-align: top;
+  margin-bottom: -50px;
+}
+.CodeMirror-gutter-wrapper {
+  position: absolute;
+  z-index: 4;
+  background: none !important;
+  border: none !important;
+}
+.CodeMirror-gutter-background {
+  position: absolute;
+  top: 0; bottom: 0;
+  z-index: 4;
+}
+.CodeMirror-gutter-elt {
+  position: absolute;
+  cursor: default;
+  z-index: 4;
+}
+.CodeMirror-gutter-wrapper ::selection { background-color: transparent }
+.CodeMirror-gutter-wrapper ::-moz-selection { background-color: transparent }
+
+.CodeMirror-lines {
+  cursor: text;
+  min-height: 1px; /* prevents collapsing before first draw */
+}
+.CodeMirror pre.CodeMirror-line,
+.CodeMirror pre.CodeMirror-line-like {
+  /* Reset some styles that the rest of the page might have set */
+  -moz-border-radius: 0; -webkit-border-radius: 0; border-radius: 0;
+  border-width: 0;
+  background: transparent;
+  font-family: inherit;
+  font-size: inherit;
+  margin: 0;
+  white-space: pre;
+  word-wrap: normal;
+  line-height: inherit;
+  color: inherit;
+  z-index: 2;
+  position: relative;
+  overflow: visible;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-font-variant-ligatures: contextual;
+  font-variant-ligatures: contextual;
+}
+.CodeMirror-wrap pre.CodeMirror-line,
+.CodeMirror-wrap pre.CodeMirror-line-like {
+  word-wrap: break-word;
+  white-space: pre-wrap;
+  word-break: normal;
+}
+
+.CodeMirror-linebackground {
+  position: absolute;
+  left: 0; right: 0; top: 0; bottom: 0;
+  z-index: 0;
+}
+
+.CodeMirror-linewidget {
+  position: relative;
+  z-index: 2;
+  padding: 0.1px; /* Force widget margins to stay inside of the container */
+}
+
+.CodeMirror-widget {}
+
+.CodeMirror-rtl pre { direction: rtl; }
+
+.CodeMirror-code {
+  outline: none;
+}
+
+/* Force content-box sizing for the elements where we expect it */
+.CodeMirror-scroll,
+.CodeMirror-sizer,
+.CodeMirror-gutter,
+.CodeMirror-gutters,
+.CodeMirror-linenumber {
+  -moz-box-sizing: content-box;
+  box-sizing: content-box;
+}
+
+.CodeMirror-measure {
+  position: absolute;
+  width: 100%;
+  height: 0;
+  overflow: hidden;
+  visibility: hidden;
+}
+
+.CodeMirror-cursor {
+  position: absolute;
+  pointer-events: none;
+}
+.CodeMirror-measure pre { position: static; }
+
+div.CodeMirror-cursors {
+  visibility: hidden;
+  position: relative;
+  z-index: 3;
+}
+div.CodeMirror-dragcursors {
+  visibility: visible;
+}
+
+.CodeMirror-focused div.CodeMirror-cursors {
+  visibility: visible;
+}
+
+.CodeMirror-selected { background: #d9d9d9; }
+.CodeMirror-focused .CodeMirror-selected { background: #d7d4f0; }
+.CodeMirror-crosshair { cursor: crosshair; }
+.CodeMirror-line::selection, .CodeMirror-line > span::selection, .CodeMirror-line > span > span::selection { background: #d7d4f0; }
+.CodeMirror-line::-moz-selection, .CodeMirror-line > span::-moz-selection, .CodeMirror-line > span > span::-moz-selection { background: #d7d4f0; }
+
+.cm-searching {
+  background-color: #ffa;
+  background-color: rgba(255, 255, 0, .4);
+}
+
+/* Used to force a border model for a node */
+.cm-force-border { padding-right: .1px; }
+
+@media print {
+  /* Hide the cursor when printing */
+  .CodeMirror div.CodeMirror-cursors {
+    visibility: hidden;
+  }
+}
+
+/* See issue #2901 */
+.cm-tab-wrap-hack:after { content: ''; }
+
+/* Help users use markselection to safely style text background */
+span.CodeMirror-selectedtext { background: none; }
+
+</style>
+
+</head>
+<body>
+<div class="shell">
+  <header class="mast">
+    <div class="brand">
+      <h1>Code <span>Calisthenics</span></h1>
+      <p>One problem a day for four months. Write the code, run the tests, and reach for a hint only when you need it.</p>
+      <nav><b>Daily</b><a href="../review/">Code review drills</a></nav>
+    </div>
+    <div class="tally" id="tally"></div>
+  </header>
+  <div class="layout">
+    <aside class="cal" id="cal" aria-label="Calendar"></aside>
+    <main class="prob" id="main"><div class="loading">Loading problems…</div></main>
+  </div>
+  <p class="foot">Your code and progress are saved in this browser only.</p>
+</div>
+
+<script src="vendor/codemirror/codemirror.js"></script>
+<script src="vendor/codemirror/javascript.js"></script>
+<script src="vendor/codemirror/closebrackets.js"></script>
+<script src="vendor/codemirror/matchbrackets.js"></script>
+<script src="vendor/codemirror/comment.js"></script>
+<script src="problems.js"></script>
+<script>
+(function () {
+  "use strict";
+
+  var KEY = "code-calisthenics:daily:v1";
+  var TRACKS = ["CS fundamentals", "Async & data", "Frontend", "Backend"];
+  var TRACK_VAR = { "CS fundamentals": "--t-cs", "Async & data": "--t-async", "Frontend": "--t-fe", "Backend": "--t-be" };
+  var LEVEL_RANK = { Easy: 0, Medium: 1, Hard: 2 };
+  var DAY_MS = 86400000;
+
+  // ---------- schedule: spread each track evenly across the days, easy to hard ----------
+  var all = (window.PROBLEMS || []).slice();
+  var byTrack = {};
+  all.forEach(function (p, i) { p._i = i; (byTrack[p.track] = byTrack[p.track] || []).push(p); });
+  var slots = [];
+  TRACKS.concat(Object.keys(byTrack).filter(function (t) { return TRACKS.indexOf(t) === -1; })).forEach(function (t, ti) {
+    var list = (byTrack[t] || []).slice().sort(function (a, b) { return LEVEL_RANK[a.level] - LEVEL_RANK[b.level] || a._i - b._i; });
+    list.forEach(function (p, k) { slots.push({ p: p, pos: (k + 0.5) / list.length, ti: ti }); });
+  });
+  slots.sort(function (a, b) { return a.pos - b.pos || a.ti - b.ti; });
+  var SCHEDULE = slots.map(function (s) { return s.p; });
+  var N = SCHEDULE.length;
+
+  // ---------- storage ----------
+  var store;
+  try { store = JSON.parse(localStorage.getItem(KEY)) || {}; } catch (e) { store = {}; }
+  store.p = store.p || {};
+  store.solvedOn = store.solvedOn || {};
+  function todayISO() { var d = new Date(); return iso(d); }
+  function iso(d) { return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0"); }
+  function parseISO(s) { var a = s.split("-"); return new Date(+a[0], +a[1] - 1, +a[2]); }
+  if (!store.start) store.start = todayISO();
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(store)); } catch (e) {} }
+  save();
+  function ps(id) { return (store.p[id] = store.p[id] || { status: null, hints: 0, revealed: false }); }
+
+  function dateOfDay(n) { var d = parseISO(store.start); d.setDate(d.getDate() + n - 1); return d; }
+  function todayDay() {
+    var diff = Math.round((parseISO(todayISO()) - parseISO(store.start)) / DAY_MS);
+    return Math.max(1, Math.min(N, diff + 1));
+  }
+
+  var hash = (location.hash || "").replace(/^#/, "");
+  var hashMatch = /^day-(\d+)$/.exec(hash);
+  var ui = { day: hashMatch ? Math.max(1, Math.min(N, +hashMatch[1])) : todayDay(), running: false, confirmReveal: false, result: null };
+
+  // ---------- helpers ----------
+  function esc(s) {
+    return String(s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; });
+  }
+  function inline(s) {
+    return esc(s)
+      .replace(/`([^`]+)`/g, "<code>$1</code>")
+      .replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>");
+  }
+  function md(text) {
+    var out = [], parts = String(text || "").split(/^```[a-z]*\s*$/m);
+    parts.forEach(function (part, i) {
+      if (i % 2 === 1) { out.push("<pre><code>" + highlight(part.replace(/^\n/, "").replace(/\n$/, "")) + "</code></pre>"); return; }
+      part.split(/\n\s*\n/).forEach(function (block) {
+        var lines = block.split("\n").filter(function (l) { return l.trim(); });
+        if (!lines.length) return;
+        if (lines.every(function (l) { return /^\s*[-*] /.test(l); })) {
+          out.push("<ul>" + lines.map(function (l) { return "<li>" + inline(l.replace(/^\s*[-*] /, "")) + "</li>"; }).join("") + "</ul>");
+        } else if (lines.every(function (l) { return /^\s*\d+\. /.test(l); })) {
+          out.push("<ol>" + lines.map(function (l) { return "<li>" + inline(l.replace(/^\s*\d+\. /, "")) + "</li>"; }).join("") + "</ol>");
+        } else {
+          out.push("<p>" + inline(lines.join(" ")) + "</p>");
+        }
+      });
+    });
+    return out.join("");
+  }
+  var KWS = new Set("const let var function return if else for of in while do break continue switch case async await new class extends import export from default try catch finally throw typeof instanceof null undefined true false this yield static get set".split(" "));
+  function highlight(code) {
+    var out = "", i = 0, L = code.length, inBlock = false;
+    while (i < L) {
+      var rest = code.slice(i);
+      if (rest.indexOf("//") === 0) { var nl = code.indexOf("\n", i); var j = nl < 0 ? L : nl; out += '<span class="com">' + esc(code.slice(i, j)) + "</span>"; i = j; continue; }
+      if (rest.indexOf("/*") === 0) { var e = code.indexOf("*/", i + 2); var k = e < 0 ? L : e + 2; out += '<span class="com">' + esc(code.slice(i, k)) + "</span>"; i = k; continue; }
+      var ch = code[i];
+      if (ch === '"' || ch === "'" || ch === "`") {
+        var q = i + 1;
+        while (q < L && code[q] !== ch && (ch === "`" || code[q] !== "\n")) { if (code[q] === "\\") q++; q++; }
+        out += '<span class="str">' + esc(code.slice(i, q + 1)) + "</span>"; i = q + 1; continue;
+      }
+      var m = /^[A-Za-z_$][\w$]*/.exec(rest);
+      if (m) {
+        var w = m[0];
+        if (KWS.has(w)) out += '<span class="kw">' + w + "</span>";
+        else if (code[i + w.length] === "(") out += '<span class="fn">' + w + "</span>";
+        else if (/^[A-Z]/.test(w)) out += '<span class="ty">' + w + "</span>";
+        else out += w;
+        i += w.length; continue;
+      }
+      var n = /^\d+(\.\d+)?/.exec(rest);
+      if (n) { out += '<span class="num">' + n[0] + "</span>"; i += n[0].length; continue; }
+      out += esc(ch); i++;
+    }
+    return out;
+  }
+  function fmtDate(d, opts) { return d.toLocaleDateString(undefined, opts || { weekday: "short", month: "short", day: "numeric" }); }
+  var $ = function (id) { return document.getElementById(id); };
+
+  // ---------- runner ----------
+  var harnessSrc = null;
+  var harnessReady = fetch("harness.js").then(function (r) { if (!r.ok) throw new Error(r.status); return r.text(); }).then(function (t) { harnessSrc = t; });
+
+  function runTests(code, tests) {
+    return harnessReady.then(function () {
+      return new Promise(function (resolve) {
+        var frame = document.createElement("iframe");
+        frame.setAttribute("sandbox", "allow-scripts");
+        frame.setAttribute("aria-hidden", "true");
+        frame.tabIndex = -1;
+        frame.style.cssText = "position:absolute;width:1px;height:1px;border:0;left:-9999px;top:0";
+        var escS = function (s) { return s.replace(/<\/script/gi, "<\\/script"); };
+        var finished = false;
+        function done(msg) {
+          if (finished) return;
+          finished = true;
+          window.removeEventListener("message", onMsg);
+          clearTimeout(timer);
+          frame.remove();
+          resolve(msg);
+        }
+        function onMsg(e) {
+          if (e.source !== frame.contentWindow || !e.data || !e.data.__calisthenics) return;
+          done(e.data);
+        }
+        window.addEventListener("message", onMsg);
+        var timer = setTimeout(function () { done({ type: "error", message: "The tests didn't finish within 20 seconds. Look for an infinite loop or a promise that never settles." }); }, 20000);
+        frame.srcdoc = "<!doctype html><html><head><meta charset=utf-8></head><body><script>" + escS(harnessSrc) + "<\/script><script>" +
+          escS(code) + "\n;\n" + escS(tests) + "\n;\nwindow.__runTests();<\/script></body></html>";
+        document.body.appendChild(frame);
+      });
+    });
+  }
+
+  // ---------- rendering ----------
+  function trackColor(t) { return "var(" + (TRACK_VAR[t] || "--muted") + ")"; }
+  function statusOf(p) {
+    var s = store.p[p.id];
+    if (!s || !s.status) return null;
+    if (s.status === "solved") return s.revealed ? "revealed" : "solved";
+    return s.revealed ? "revealed" : "attempted";
+  }
+
+  function streak() {
+    var n = 0, d = parseISO(todayISO());
+    if (!store.solvedOn[iso(d)]) d.setDate(d.getDate() - 1);
+    while (store.solvedOn[iso(d)]) { n++; d.setDate(d.getDate() - 1); }
+    return n;
+  }
+
+  function renderTally() {
+    var solved = SCHEDULE.filter(function (p) { return store.p[p.id] && store.p[p.id].status === "solved"; }).length;
+    var td = todayDay();
+    $("tally").innerHTML =
+      "<div><b>" + td + "<span style=\"font-size:14px;color:var(--muted)\">/" + N + "</span></b><small>Today</small></div>" +
+      "<div><b>" + solved + "</b><small>Solved</small></div>" +
+      "<div><b>" + streak() + "</b><small>Day streak</small></div>";
+  }
+
+  function renderCal() {
+    var td = todayDay();
+    var months = [], cur = null;
+    for (var n = 1; n <= N; n++) {
+      var d = dateOfDay(n);
+      var key = d.getFullYear() + "-" + d.getMonth();
+      if (!cur || cur.key !== key) { cur = { key: key, label: fmtDate(d, { month: "long", year: "numeric" }), lead: d.getDay(), days: [] }; months.push(cur); }
+      cur.days.push(n);
+    }
+    var dows = ["S", "M", "T", "W", "T", "F", "S"].map(function (x) { return '<span class="dow" aria-hidden="true">' + x + "</span>"; }).join("");
+    var html = '<div class="cal-head"><h2>Four-month plan</h2>' +
+      (ui.day !== td ? '<button class="btn quiet small" data-action="today">Go to today</button>' : "") + "</div>" +
+      '<div class="cal-body">' + months.map(function (m) {
+        var cells = "";
+        for (var i = 0; i < m.lead; i++) cells += '<span class="day empty"></span>';
+        cells += m.days.map(function (n) {
+          var p = SCHEDULE[n - 1], st = statusOf(p), d = dateOfDay(n);
+          var cls = "day" + (st ? " " + st : "") + (n === td ? " today" : "") + (n > td ? " future" : "");
+          var label = "Day " + n + ", " + fmtDate(d) + ": " + p.title + (st ? " (" + st + ")" : "");
+          return '<button class="' + cls + '" style="--tc:' + trackColor(p.track) + '" data-action="day" data-day="' + n + '" aria-label="' + esc(label) + '" title="' + esc(label) + '"' + (n === ui.day ? ' aria-current="true"' : "") + ">" + d.getDate() + "</button>";
+        }).join("");
+        return '<div class="month"><h3>' + esc(m.label) + '</h3><div class="grid7">' + dows + cells + "</div></div>";
+      }).join("") + "</div>" +
+      '<div class="legend"><span><i style="background:var(--good-soft);border-color:transparent"></i>Solved</span><span><i style="background:var(--part-soft);border-color:transparent"></i>Answer revealed</span><span><i style="border-color:var(--part)"></i>Started</span></div>' +
+      '<div class="legend">' + TRACKS.map(function (t) { return '<span><i class="tdot" style="background:' + trackColor(t) + '"></i>' + esc(t) + "</span>"; }).join("") + "</div>" +
+      '<details class="settings"><summary>Change start date</summary><label for="start-date">Day 1 is</label><input type="date" id="start-date" value="' + store.start + '"></details>';
+    $("cal").innerHTML = html;
+  }
+
+  var editor = null;
+  var saveTimer = null;
+
+  function renderResults() {
+    var r = ui.result;
+    if (!r) return '<div class="empty-results">Run the tests to check your solution. Ctrl or ⌘ + Enter works too.</div>';
+    if (r.running) return '<div class="empty-results">Running tests…</div>';
+    var html = "";
+    if (r.type === "error") {
+      html += '<div class="summary fail">Your code threw before the tests could run</div><div class="err">' + esc(r.message) + "</div>";
+    } else {
+      var passed = r.results.filter(function (t) { return t.pass; }).length, total = r.results.length;
+      var all = passed === total;
+      html += '<div class="summary ' + (all ? "pass" : "fail") + '">' + passed + " of " + total + " tests passing" +
+        '<span class="bar" aria-hidden="true"><i style="width:' + (total ? (passed / total) * 100 : 0) + '%"></i></span></div>';
+      if (all) html += '<div class="win">All tests pass. Read the explanation below to compare approaches.</div>';
+      html += '<ul class="tests">' + r.results.map(function (t) {
+        return '<li class="' + (t.pass ? "ok" : "no") + '"><span class="mark" aria-label="' + (t.pass ? "Passed" : "Failed") + '">' + (t.pass ? "✓" : "✗") + "</span><span>" + esc(t.name) + "</span>" +
+          (t.pass ? "" : '<span class="msg">' + esc(t.message || "") + "</span>") + "</li>";
+      }).join("") + "</ul>";
+    }
+    if (r.logs && r.logs.length) {
+      html += '<details class="logs"' + (r.type === "error" ? " open" : "") + "><summary>Console output (" + r.logs.length + ")</summary><pre>" +
+        esc(r.logs.map(function (l) { return (l.level === "log" ? "" : l.level + ": ") + l.text; }).join("\n")) + "</pre></details>";
+    }
+    return html;
+  }
+
+  function renderHelp(p) {
+    var s = ps(p.id);
+    var shown = p.hints.slice(0, s.hints);
+    var hintsHtml = '<section class="panel' + (s.revealed ? " wide" : "") + '" aria-label="Hints"><div class="panel-head"><b>Hints</b><span class="hint">' + s.hints + " of " + p.hints.length + " shown</span></div>" +
+      '<div class="panel-body">' +
+      (shown.length ? '<ol class="hints">' + shown.map(function (h) { return "<li class=\"prose\">" + md(h) + "</li>"; }).join("") + "</ol>" : '<p class="hint" style="margin:0">Stuck? Hints get more specific as you go.</p>') +
+      (s.hints < p.hints.length ? '<div><button class="btn small" data-action="hint">Show hint ' + (s.hints + 1) + "</button></div>" : "") +
+      "</div></section>";
+    var ansHtml = "";
+    if (!s.revealed) {
+      ansHtml = '<section class="panel" aria-label="Answer"><div class="panel-head"><b>Answer and explanation</b></div>' + '<div class="panel-body"><p class="hint" style="margin:0">See a reference solution with a walkthrough of how it works and what interviewers ask next.' + (s.status === "solved" ? "" : " Revealing it before you solve the problem marks the day as revealed.") + "</p>" +
+        '<div><button class="btn small ' + (ui.confirmReveal ? "warn" : "") + '" data-action="reveal">' + (ui.confirmReveal ? "Click again to reveal" : "Reveal answer") + "</button></div></div></section>";
+    }
+    var body = "";
+    if (s.revealed) {
+      body = '<section class="panel answer-panel" aria-label="Solution"><div class="panel-head"><b>Reference solution</b><button class="btn small" data-action="load-solution">Copy into editor</button></div>' +
+        '<div class="answer-body"><pre class="solution"><code>' + highlight(p.solution) + '</code></pre><div class="prose">' + md(p.explanation) + "</div></div></section>";
+    }
+    return '<div class="help">' + hintsHtml + ansHtml + body + "</div>";
+  }
+
+  function renderMain() {
+    var p = SCHEDULE[ui.day - 1];
+    if (!p) { $("main").innerHTML = '<div class="loading">No problems found.</div>'; return; }
+    var s = ps(p.id), st = statusOf(p), td = todayDay(), d = dateOfDay(ui.day);
+    var when = ui.day === td ? "Today" : ui.day < td ? "Past" : "Upcoming";
+    $("main").innerHTML =
+      '<header class="prob-head">' +
+      '<div class="eyebrow"><span>Day ' + ui.day + " · " + esc(fmtDate(d)) + (when !== "Past" ? " · " + when : "") + '</span><span class="track" style="--tc:' + trackColor(p.track) + '">' + esc(p.track) + "</span><span>" + esc(p.level) + "</span><span>About " + p.minutes + " min</span>" +
+      (st ? '<span class="status-pill ' + st + '">' + { solved: "Solved", revealed: s.status === "solved" ? "Solved, answer viewed" : "Answer revealed", attempted: "In progress" }[st] + "</span>" : "") + "</div>" +
+      "<h2>" + esc(p.title) + "</h2>" +
+      '<div class="daynav"><button class="btn small" data-action="prev"' + (ui.day <= 1 ? " disabled" : "") + '>← Day ' + (ui.day - 1 || 1) + '</button><button class="btn small" data-action="next"' + (ui.day >= N ? " disabled" : "") + ">Day " + Math.min(N, ui.day + 1) + " →</button></div>" +
+      "</header>" +
+      '<section class="prose" aria-label="Problem">' + md(p.prompt) + "</section>" +
+      '<section class="panel editor-wrap" aria-label="Your solution"><div class="panel-head"><code>solution.js</code><button class="btn quiet small" data-action="reset-code">Reset to starter</button></div>' +
+      '<div id="editor-host"></div>' +
+      '<div class="panel-foot"><span class="hint">Saved as you type</span><button class="btn primary" data-action="run" id="run-btn">Run tests</button></div></section>' +
+      '<section class="panel" aria-label="Test results"><div class="panel-head"><b>Tests</b></div><div class="results" id="results" aria-live="polite">' + renderResults() + "</div></section>" +
+      '<div id="help">' + renderHelp(p) + "</div>";
+    mountEditor(p, s);
+  }
+
+  function mountEditor(p, s) {
+    var host = $("editor-host");
+    var code = s.code != null ? s.code : p.starter;
+    if (window.CodeMirror) {
+      editor = CodeMirror(host, {
+        value: code, mode: "javascript", lineNumbers: true, tabSize: 2, indentUnit: 2, indentWithTabs: false,
+        autoCloseBrackets: true, matchBrackets: true, viewportMargin: Infinity, lineWrapping: false,
+        extraKeys: {
+          "Ctrl-Enter": run, "Cmd-Enter": run, "Ctrl-/": "toggleComment", "Cmd-/": "toggleComment",
+          Tab: function (cm) { if (cm.somethingSelected()) cm.indentSelection("add"); else cm.replaceSelection("  ", "end"); },
+          "Shift-Tab": function (cm) { cm.indentSelection("subtract"); },
+        },
+      });
+      editor.on("change", function () { queueSave(p); });
+    } else {
+      host.innerHTML = '<textarea class="fallback" id="fallback-editor" spellcheck="false" aria-label="Your solution"></textarea>';
+      var ta = $("fallback-editor");
+      ta.value = code;
+      editor = { getValue: function () { return ta.value; }, setValue: function (v) { ta.value = v; }, focus: function () { ta.focus(); } };
+      ta.addEventListener("input", function () { queueSave(p); });
+      ta.addEventListener("keydown", function (e) {
+        if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) { e.preventDefault(); run(); }
+        if (e.key === "Tab") { e.preventDefault(); var a = ta.selectionStart; ta.setRangeText("  ", a, ta.selectionEnd, "end"); queueSave(p); }
+      });
+    }
+  }
+
+  function queueSave(p) {
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(function () {
+      var s = ps(p.id);
+      s.code = editor.getValue();
+      save();
+    }, 300);
+  }
+
+  function refreshHelp() { $("help").innerHTML = renderHelp(SCHEDULE[ui.day - 1]); }
+
+  function render() {
+    renderTally();
+    renderCal();
+    renderMain();
+  }
+
+  function go(n) {
+    n = Math.max(1, Math.min(N, n));
+    if (editor) { var cur = SCHEDULE[ui.day - 1]; ps(cur.id).code = editor.getValue(); save(); }
+    ui.day = n; ui.result = null; ui.confirmReveal = false;
+    try { history.replaceState(null, "", "#day-" + n); } catch (e) {}
+    render();
+    var m = $("main");
+    if (m.getBoundingClientRect().top < 0) m.scrollIntoView({ block: "start" });
+  }
+
+  function run() {
+    if (ui.running) return;
+    var p = SCHEDULE[ui.day - 1], s = ps(p.id);
+    var code = editor.getValue();
+    s.code = code;
+    if (!s.status) s.status = "attempted";
+    save();
+    ui.running = true;
+    ui.result = { running: true };
+    $("results").innerHTML = renderResults();
+    var btn = $("run-btn"); if (btn) btn.disabled = true;
+    runTests(code, p.tests).then(function (r) {
+      ui.result = r;
+      if (r.type === "results" && r.results.length && r.results.every(function (t) { return t.pass; }) && s.status !== "solved") {
+        s.status = "solved";
+        s.solvedAt = Date.now();
+        store.solvedOn[todayISO()] = (store.solvedOn[todayISO()] || 0) + 1;
+      }
+      save();
+    }).catch(function (e) {
+      ui.result = { type: "error", message: "Couldn't load the test runner (" + e.message + "). Reload the page and try again." };
+    }).then(function () {
+      ui.running = false;
+      if (SCHEDULE[ui.day - 1] !== p) return;
+      $("results").innerHTML = renderResults();
+      var b = $("run-btn"); if (b) b.disabled = false;
+      renderTally(); renderCal();
+      var pill = statusOf(p);
+      var eb = document.querySelector(".prob-head .status-pill");
+      if (pill && !eb) renderHeaderPill(p);
+      else if (eb) { eb.className = "status-pill " + pill; eb.textContent = { solved: "Solved", revealed: s.status === "solved" ? "Solved, answer viewed" : "Answer revealed", attempted: "In progress" }[pill]; }
+    });
+  }
+  function renderHeaderPill(p) {
+    var eb = document.querySelector(".prob-head .eyebrow");
+    if (!eb) return;
+    var st = statusOf(p), s = ps(p.id);
+    var span = document.createElement("span");
+    span.className = "status-pill " + st;
+    span.textContent = { solved: "Solved", revealed: s.status === "solved" ? "Solved, answer viewed" : "Answer revealed", attempted: "In progress" }[st];
+    eb.appendChild(span);
+  }
+
+  document.addEventListener("click", function (e) {
+    var b = e.target.closest("[data-action]");
+    if (!b) return;
+    var a = b.getAttribute("data-action");
+    var p = SCHEDULE[ui.day - 1], s = p && ps(p.id);
+    if (a !== "reveal") ui.confirmReveal = false;
+    if (a === "day") return go(+b.getAttribute("data-day"));
+    if (a === "today") return go(todayDay());
+    if (a === "prev") return go(ui.day - 1);
+    if (a === "next") return go(ui.day + 1);
+    if (a === "run") return run();
+    if (a === "hint") { s.hints = Math.min(p.hints.length, s.hints + 1); save(); return refreshHelp(); }
+    if (a === "reveal") {
+      if (!ui.confirmReveal && s.status !== "solved") { ui.confirmReveal = true; return refreshHelp(); }
+      ui.confirmReveal = false; s.revealed = true; if (!s.status) s.status = "attempted"; save();
+      refreshHelp(); renderCal(); renderTally();
+      var eb = document.querySelector(".prob-head .status-pill");
+      if (eb) eb.remove();
+      renderHeaderPill(p);
+      return;
+    }
+    if (a === "load-solution") { editor.setValue(p.solution); s.code = p.solution; save(); editor.focus && editor.focus(); return; }
+    if (a === "reset-code") {
+      if (b.getAttribute("data-armed") !== "1") { b.setAttribute("data-armed", "1"); b.textContent = "Click again to reset"; return; }
+      editor.setValue(p.starter); s.code = p.starter; save(); b.removeAttribute("data-armed"); b.textContent = "Reset to starter"; return;
+    }
+  });
+  document.addEventListener("change", function (e) {
+    if (e.target.id === "start-date" && e.target.value) {
+      store.start = e.target.value; save();
+      ui.day = todayDay(); ui.result = null; render();
+    }
+  });
+  window.addEventListener("hashchange", function () {
+    var m = /^#day-(\d+)$/.exec(location.hash);
+    if (m && +m[1] !== ui.day) go(+m[1]);
+  });
+
+  if (!N) { $("main").innerHTML = '<div class="loading">No problems found.</div>'; return; }
+  render();
+})();
+</script>
+</body>
+</html>
